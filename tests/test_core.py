@@ -92,6 +92,19 @@ def test_reproducible_splits():
     assert a != make_splits(ids,12)
 
 
+@pytest.mark.parametrize("count", [3, 4, 5])
+def test_small_splits_keep_all_partitions_nonempty(count):
+    result=make_splits([str(i) for i in range(count)],7)
+    assert all(result[name] for name in ("train","validation","test"))
+    assert len(sum(result.values(),[]))==count
+
+
+@pytest.mark.parametrize("ids", [[], ["one"], ["one","two"]])
+def test_too_few_samples_has_actionable_split_error(ids):
+    with pytest.raises(ValueError,match="At least 3"):
+        make_splits(ids,42)
+
+
 @pytest.mark.parametrize("name",["custom_cnn","unet"])
 def test_model_output_shape(name):
     y=build_model(name)(torch.rand(1,3,64,64)); assert y.shape==(1,1,64,64)

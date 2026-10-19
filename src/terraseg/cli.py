@@ -50,26 +50,86 @@ def main(argv=None):
         return
     config={}
     if args.command=="train":
-        config=json.loads(Path(args.config).read_text(encoding="utf-8")); args.image_size=config["image_size"]; args.batch_size=config["batch_size"]; args.num_workers=config.get("num_workers",0); args.threshold=config.get("threshold",.5)
+        try:
+            config=json.loads(Path(args.config).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            p.error(f"Could not read config file {args.config}: {exc}")
+        if not isinstance(config, dict):
+            p.error(f"Config file {args.config} must contain a JSON object.")
+        try:
+            args.image_size=int(config["image_size"]); args.batch_size=int(config["batch_size"]); args.num_workers=int(config.get("num_workers",0)); args.threshold=float(config.get("threshold",.5))
+            if args.image_size < 1 or args.batch_size < 1 or args.num_workers < 0 or not 0 < args.threshold < 1:
+                raise ValueError("image_size/batch_size must be positive, num_workers nonnegative, and threshold between 0 and 1")
+            train_fraction=float(config["train_fraction"]); validation_fraction=float(config["validation_fraction"])
+            test_fraction=float(config.get("test_fraction",1-train_fraction-validation_fraction))
+            if abs(train_fraction + validation_fraction + test_fraction - 1.0) > 1e-6:
+                raise ValueError("train_fraction, validation_fraction, and test_fraction must sum to 1")
+        except (KeyError, TypeError, ValueError) as exc:
+            p.error(f"Invalid training config {args.config}: {exc}")
         args.imagenet_normalization=args.imagenet_normalization or config.get("imagenet_normalization",False)
-        pairs=matched_pairs(args.images,args.masks,strict=True); ids=[p[0] for p in pairs]
-        if Path(args.splits).exists(): splits=load_splits(args.splits)
+        try:
+            pairs=matched_pairs(args.images,args.masks,strict=True)
+        except ValueError as exc:
+            p.error(f"Dataset pairing failed: {exc}. Run `terraseg audit` to inspect the files.")
+        ids=[p[0] for p in pairs]
+        if not ids:
+            p.error("No matched image-mask pairs found. Run `terraseg audit` and place corresponding files directly in the selected folders.")
+        if len(ids) < 3:
+            p.error(f"Only {len(ids)} matched image-mask pair(s) found. At least 3 are required to create non-empty train, validation, and test partitions.")
+        split_path=Path(args.splits)
+        if split_path.exists():
+            try:
+                splits=load_splits(split_path)
+            except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+                p.error(f"Could not read split file {split_path}: {exc}. Choose a new path with --splits.")
+            if isinstance(splits,dict) and set(splits)=={"train","validation","test"} and all(isinstance(v,list) for v in splits.values()) and not any(splits.values()):
+                print(f"Existing split file {split_path} is empty; regenerating it from the {len(ids)} matched pairs.")
+                splits=make_splits(ids,args.seed,train_fraction,validation_fraction)
+                save_splits(splits,split_path,args.seed)
+            else:
+                if not isinstance(splits,dict) or set(splits) != {"train","validation","test"} or not all(isinstance(v,list) and all(isinstance(i,str) for i in v) for v in splits.values()):
+                    p.error(f"Split file {split_path} must contain train, validation, and test lists of sample IDs.")
+                flattened=sum(splits.values(),[])
+                if len(flattened) != len(set(flattened)) or set(flattened) != set(ids):
+                    p.error(f"Split file {split_path} does not match the current dataset. Use a new path with --splits or remove the stale split file after reviewing it.")
         else:
-            splits=make_splits(ids,args.seed,config["train_fraction"],config["validation_fraction"]); save_splits(splits,args.splits,args.seed)
-        split_seed=json.loads(Path(args.splits).read_text(encoding="utf-8")).get("seed")
+            try:
+                splits=make_splits(ids,args.seed,train_fraction,validation_fraction)
+            except ValueError as exc:
+                p.error(str(exc))
+            save_splits(splits,split_path,args.seed)
+        try:
+            split_metadata=json.loads(split_path.read_text(encoding="utf-8"))
+            split_seed=split_metadata.get("seed") if isinstance(split_metadata,dict) else None
+        except (OSError, json.JSONDecodeError) as exc:
+            p.error(f"Could not read split metadata from {split_path}: {exc}")
         flattened=sum(splits.values(),[])
-        if set(splits) != {"train","validation","test"} or len(flattened) != len(set(flattened)) or set(flattened) != set(ids): raise ValueError("Saved splits do not match current paired dataset")
-        if not splits["train"] or not splits["validation"] or not splits["test"]: raise ValueError("Train, validation, and test partitions must all be non-empty")
+        if not splits["train"] or not splits["validation"] or not splits["test"]:
+            p.error(f"Split file {split_path} has an empty partition. Remove it after review or pass a new --splits path.")
         model_name=args.model; epochs=config["epochs"]; patience=config.get("patience",10); lr=config["learning_rate"]; loss_name=config["loss"]; pos=config.get("positive_weight",15.)
         augment=args.augment or config.get("augmentation",False)
         run_config={**config,"model":model_name,"seed":args.seed,"split_seed":split_seed,"augmentation":augment,"imagenet_normalization":args.imagenet_normalization,"splits":str(Path(args.splits))}
         output=Path(args.output or f"results/{model_name}/{Path(args.config).stem}_seed{args.seed}")
     else:
-        splits=load_splits(args.splits); model_name=args.model; output=Path(args.output or f"results/evaluation_{model_name}_{args.partition}"); augment=False
+        try:
+            splits=load_splits(args.splits)
+        except (OSError, ValueError, KeyError) as exc:
+            p.error(f"Could not read split file {args.splits}: {exc}")
+        if not isinstance(splits,dict) or set(splits)!={"train","validation","test"} or not all(isinstance(v,list) for v in splits.values()):
+            p.error(f"Split file {args.splits} must contain train, validation, and test lists.")
+        if not splits[args.partition]:
+            p.error(f"The {args.partition} partition in {args.splits} is empty.")
+        try:
+            pairs=matched_pairs(args.images,args.masks,strict=True)
+        except ValueError as exc:
+            p.error(f"Dataset pairing failed: {exc}. Run `terraseg audit` to inspect the files.")
+        if set(sum(splits.values(),[])) != {pair[0] for pair in pairs}:
+            p.error(f"Split file {args.splits} does not match the current dataset.")
+        model_name=args.model; output=Path(args.output or f"results/evaluation_{model_name}_{args.partition}"); augment=False
     random.seed(getattr(args,"seed",42)); np.random.seed(getattr(args,"seed",42)); torch.manual_seed(getattr(args,"seed",42))
     device=torch.device(("cuda" if torch.cuda.is_available() else "cpu") if args.device=="auto" else args.device)
     if args.command=="train":
-        if (output/"best.pt").exists(): raise FileExistsError(f"Run already exists: {output}. Choose a new --output directory to preserve it.")
+        if (output/"best.pt").exists(): p.error(f"Run already exists: {output}. Choose a new --output directory to preserve it.")
         train_loader=_loader(args,splits["train"],augment,True); val_loader=_loader(args,splits["validation"])
         model=build_model(model_name,args.pretrained or model_name=="resnet34_unet").to(device); criterion=build_loss(loss_name,pos,device); optimizer=torch.optim.Adam(model.parameters(),lr=lr)
         output.mkdir(parents=True,exist_ok=True); (output/"config.json").write_text(json.dumps(run_config,indent=2),encoding="utf-8")

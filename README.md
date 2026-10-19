@@ -133,7 +133,7 @@ Install test dependencies using the setup commands, then run:
 python -m pytest -q tests
 ```
 
-Tests create tiny synthetic images/masks and cover matching, integrity errors, shapes/ranges, augmentation, deterministic evaluation preprocessing, metrics and edge cases, model output dimensions, and seeded splits. No Bijie download or full training is required. The CPU smoke check passed. In this restricted Windows environment, six tests passed but seven tests could not create pytest temporary folders (Windows access denied); the full suite remains unverified. Run `python -m pytest -q tests` in your project environment.
+Tests create tiny synthetic images/masks and cover matching, integrity errors, shapes/ranges, augmentation, deterministic evaluation preprocessing, metrics and edge cases, model output dimensions, and seeded splits. No Bijie download or full training is required. The CPU smoke check passed. In this restricted Windows environment, six tests passed but seven tests could not create pytest temporary folders (Windows access denied); the full suite remains unverified. Run `python -m pytest -q tests` in your project environment. Training requires at least three clean matched pairs so every partition has a sample; with tiny datasets, split sizes are adjusted to preserve non-empty train, validation, and test partitions.
 
 Seeds, split IDs, configurations, epoch records, and metrics are saved. Exact bitwise reproducibility can vary by hardware, software versions, and GPU kernels. The saved test partition must remain out of model selection and threshold tuning.
 

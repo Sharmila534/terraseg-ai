@@ -53,13 +53,25 @@ def matched_pairs(image_dir: str | Path, mask_dir: str | Path, strict: bool = Tr
 
 
 def make_splits(ids: Sequence[str], seed: int, train_fraction: float = .70, validation_fraction: float = .15) -> dict[str, list[str]]:
-    if not 0 < train_fraction < 1 or not 0 <= validation_fraction < 1 or train_fraction + validation_fraction >= 1:
-        raise ValueError("Fractions must be positive and leave a non-empty test fraction")
+    if not 0 < train_fraction < 1 or not 0 < validation_fraction < 1 or train_fraction + validation_fraction >= 1:
+        raise ValueError("Train and validation fractions must be positive and leave a positive test fraction")
     ordered = list(ids)
-    random.Random(seed).shuffle(ordered)
+    if len(set(ordered)) != len(ordered):
+        raise ValueError("Sample IDs must be unique before splitting")
     n = len(ordered)
-    n_train = int(n * train_fraction)
-    n_val = int(n * validation_fraction)
+    if n < 3:
+        raise ValueError(f"At least 3 matched image-mask pairs are required for train/validation/test; found {n}")
+    random.Random(seed).shuffle(ordered)
+    n_train = max(1, int(n * train_fraction))
+    n_val = max(1, int(n * validation_fraction))
+    # Preserve at least one example in each partition for small datasets.
+    while n_train + n_val >= n:
+        if n_train >= n_val and n_train > 1:
+            n_train -= 1
+        elif n_val > 1:
+            n_val -= 1
+        else:
+            raise ValueError("Could not form non-empty train/validation/test partitions")
     return {"train": ordered[:n_train], "validation": ordered[n_train:n_train+n_val], "test": ordered[n_train+n_val:]}
 
 
