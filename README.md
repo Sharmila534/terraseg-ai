@@ -75,13 +75,27 @@ If data is in Google Drive, mount it and pass the actual extracted image and mas
 
 ## 7. Dataset configuration and audit
 
-The CLI takes explicit image and mask directories. It does not assume directory names or an archive layout. For example, after extracting the dataset and confirming the folders:
+Keep the project, virtual environment, local dataset folders, and results under the C-drive project folder. The `data` directory is ignored by Git. The code does not assume the archive's folder layout, so inspect the extracted archive first. To make project-local destinations, run this from the project root:
 
 ```powershell
-python -m terraseg audit --images "D:\data\bijie\images" --masks "D:\data\bijie\masks"
+New-Item -ItemType Directory -Force -Path .\data\bijie\raw, .\data\bijie\images, .\data\bijie\masks | Out-Null
+Get-ChildItem .\data\bijie -Recurse -Directory
 ```
 
-Supported file extensions are PNG, JPG/JPEG, and TIFF. The audit prints counts and unmatched/duplicate names; it exits with an error status if the pairs are not clean. Resolve discrepancies before training. Keep the dataset outside the repository.
+Download the dataset from the upstream source and extract it under `data\bijie\raw`. Inspect its real structure, then copy the corresponding image/mask files into the two folders above while preserving their filename stems. Do not invent masks for unmatched files. Or, if the archive already has clean matching folders, set `$images` and `$masks` to those actual folder paths instead. Then run:
+
+```powershell
+$images = ".\data\bijie\images"
+$masks = ".\data\bijie\masks"
+if (!(Test-Path -LiteralPath $images) -or !(Test-Path -LiteralPath $masks)) { throw "Create the image and mask folders above first." }
+Test-Path -LiteralPath $images
+Test-Path -LiteralPath $masks
+Get-ChildItem -LiteralPath $images -File | Select-Object -First 5 Name
+Get-ChildItem -LiteralPath $masks -File | Select-Object -First 5 Name
+python -m terraseg audit --images $images --masks $masks
+```
+
+Supported file extensions are PNG, JPG/JPEG, and TIFF. The audit prints counts and unmatched/duplicate names; it exits with an error status if the pairs are not clean or no pairs are found. Resolve discrepancies before training. Files under `data` are ignored by Git and will stay local.
 
 ## 8. Train, smoke-test, and evaluate
 
@@ -91,20 +105,25 @@ Run from the project root after installation. The first training run writes `res
 # Synthetic model-shape smoke check; no dataset needed
 python -m terraseg smoke --device cpu
 
+# Set these once per PowerShell window. Change them only if your actual folders differ.
+$images = ".\data\bijie\images"
+$masks = ".\data\bijie\masks"
+if (!(Test-Path -LiteralPath $images) -or !(Test-Path -LiteralPath $masks)) { throw "Create the image and mask folders in the dataset configuration section first." }
+
 # Initial baseline settings
-python -m terraseg train --images "D:\data\bijie\images" --masks "D:\data\bijie\masks" --model unet --config configs/default.json --seed 42
+python -m terraseg train --images $images --masks $masks --model unet --config configs/default.json --seed 42
 
 # Advanced U-Net and pretrained ResNet-34 U-Net presets
-python -m terraseg train --images "D:\data\bijie\images" --masks "D:\data\bijie\masks" --model unet --config configs/advanced_unet.json --seed 42
-python -m terraseg train --images "D:\data\bijie\images" --masks "D:\data\bijie\masks" --model resnet34_unet --config configs/resnet34.json --seed 42
+python -m terraseg train --images $images --masks $masks --model unet --config configs/advanced_unet.json --seed 42
+python -m terraseg train --images $images --masks $masks --model resnet34_unet --config configs/resnet34.json --seed 42
 
 # Evaluate the selected checkpoint on the held-out test partition
-python -m terraseg evaluate --images "D:\data\bijie\images" --masks "D:\data\bijie\masks" --model unet --checkpoint results/unet/advanced_unet_seed42/best.pt --splits results/splits.json --partition test
+python -m terraseg evaluate --images $images --masks $masks --model unet --checkpoint results/unet/advanced_unet_seed42/best.pt --splits results/splits.json --partition test
 ```
 
 Use `--model custom_cnn` to train the custom CNN. A run is written to `results/<model>/<config>_seed<seed>/`; an existing checkpoint is not overwritten. Pass a distinct `--output` when repeating the same config/seed. Training writes `config.json`, `epochs.json`, `best.pt`, `validation_metrics.json`, and a validation plot. Evaluation writes `metrics.json` and a plot. Run logs include per-epoch loss/metrics and elapsed times. Do not tune thresholds or choose models from test results.
 
-In Git Bash, use paths such as `/d/data/bijie/images` instead of `D:\data\bijie\images`.
+If using Git Bash, the equivalent project-local paths are `./data/bijie/images` and `./data/bijie/masks`.
 
 ## 9. Tests and reproducibility
 
@@ -114,7 +133,7 @@ Install test dependencies using the setup commands, then run:
 python -m pytest -q tests
 ```
 
-Tests create tiny synthetic images/masks and cover matching, integrity errors, shapes/ranges, augmentation, deterministic evaluation preprocessing, metrics and edge cases, model output dimensions, and seeded splits. No Bijie download or full training is required. At the time this README was prepared, the available environment lacked PyTorch, torchvision, and pytest, so the test suite was not run; compilation succeeded, but test cases must still be run in the installed project environment.
+Tests create tiny synthetic images/masks and cover matching, integrity errors, shapes/ranges, augmentation, deterministic evaluation preprocessing, metrics and edge cases, model output dimensions, and seeded splits. No Bijie download or full training is required. The CPU smoke check passed. In this restricted Windows environment, six tests passed but seven tests could not create pytest temporary folders (Windows access denied); the full suite remains unverified. Run `python -m pytest -q tests` in your project environment.
 
 Seeds, split IDs, configurations, epoch records, and metrics are saved. Exact bitwise reproducibility can vary by hardware, software versions, and GPU kernels. The saved test partition must remain out of model selection and threshold tuning.
 

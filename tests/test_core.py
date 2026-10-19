@@ -6,6 +6,9 @@ from PIL import Image
 from terraseg.data import audit_pairs, matched_pairs, make_splits, BijieDataset
 from terraseg.metrics import binary_metrics
 from terraseg.models import build_model
+from terraseg.cli import _validate_data_paths
+import argparse
+from types import SimpleNamespace
 
 
 def _pair_dirs(tmp_path):
@@ -31,6 +34,14 @@ def test_unmatched_files_reported(tmp_path):
 def test_missing_directory_is_reported(tmp_path):
     im,ma=_pair_dirs(tmp_path)
     with pytest.raises(FileNotFoundError): audit_pairs(im,ma/"missing")
+
+
+def test_cli_explains_invalid_dataset_paths(tmp_path, capsys):
+    parser=argparse.ArgumentParser(prog="terraseg")
+    args=SimpleNamespace(images=str(tmp_path/"missing-images"),masks=str(tmp_path/"missing-masks"))
+    with pytest.raises(SystemExit): _validate_data_paths(args,parser)
+    message=capsys.readouterr().err
+    assert "Replace the example paths" in message and "missing-images" in message
 
 
 def test_duplicate_stems_rejected(tmp_path):

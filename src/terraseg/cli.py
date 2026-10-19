@@ -19,6 +19,13 @@ def _common(p):
     p.add_argument("--images",required=True); p.add_argument("--masks",required=True)
 
 
+def _validate_data_paths(args, parser):
+    missing=[(name,value) for name,value in (("image",args.images),("mask",args.masks)) if not Path(value).is_dir()]
+    if missing:
+        details="; ".join(f"{name} directory does not exist: {value}" for name,value in missing)
+        parser.error(f"{details}. Replace the example paths with the actual extracted image and mask folder paths.")
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(prog="terraseg"); sub=p.add_subparsers(dest="command",required=True)
     a=sub.add_parser("audit"); _common(a)
@@ -26,8 +33,13 @@ def main(argv=None):
     e=sub.add_parser("evaluate"); _common(e); e.add_argument("--model",choices=["custom_cnn","unet","resnet34_unet"],required=True); e.add_argument("--checkpoint",required=True); e.add_argument("--splits",default="results/splits.json"); e.add_argument("--partition",choices=["validation","test"],default="test"); e.add_argument("--threshold",type=float,default=.5); e.add_argument("--image-size",type=int,default=256); e.add_argument("--batch-size",type=int,default=8); e.add_argument("--num-workers",type=int,default=0); e.add_argument("--imagenet-normalization",action="store_true"); e.add_argument("--output",default=None); e.add_argument("--device",default="auto")
     s=sub.add_parser("smoke"); s.add_argument("--device",default="cpu")
     args=p.parse_args(argv)
+    if args.command in {"audit","train","evaluate"}:
+        _validate_data_paths(args,p)
     if args.command=="audit":
         report=audit_pairs(args.images,args.masks); print(json.dumps(report,indent=2))
+        if not report["paired_count"]:
+            print("No image-mask pairs found. Put matching files in the selected folders or correct the folder paths.")
+            raise SystemExit(2)
         if report["duplicate_images"] or report["duplicate_masks"] or report["unmatched_images"] or report["unmatched_masks"]: raise SystemExit(2)
         return
     if args.command=="smoke":
