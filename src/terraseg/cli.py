@@ -112,6 +112,12 @@ def main(argv=None):
         output=Path(args.output or f"results/{model_name}/{Path(args.config).stem}_seed{args.seed}")
     else:
         try:
+            pairs=matched_pairs(args.images,args.masks,strict=True)
+        except ValueError as exc:
+            p.error(f"Dataset pairing failed: {exc}. Run `terraseg audit` to inspect the files.")
+        if not pairs:
+            p.error("No matched image-mask pairs found. Run `terraseg audit` and place corresponding files directly in the selected folders.")
+        try:
             splits=load_splits(args.splits)
         except (OSError, ValueError, KeyError) as exc:
             p.error(f"Could not read split file {args.splits}: {exc}")
@@ -119,10 +125,6 @@ def main(argv=None):
             p.error(f"Split file {args.splits} must contain train, validation, and test lists.")
         if not splits[args.partition]:
             p.error(f"The {args.partition} partition in {args.splits} is empty.")
-        try:
-            pairs=matched_pairs(args.images,args.masks,strict=True)
-        except ValueError as exc:
-            p.error(f"Dataset pairing failed: {exc}. Run `terraseg audit` to inspect the files.")
         if set(sum(splits.values(),[])) != {pair[0] for pair in pairs}:
             p.error(f"Split file {args.splits} does not match the current dataset.")
         model_name=args.model; output=Path(args.output or f"results/evaluation_{model_name}_{args.partition}"); augment=False
