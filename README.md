@@ -143,11 +143,11 @@ Seeds, split IDs, configurations, epoch records, and metrics are saved. Exact bi
 |---|---|
 | Original supplied Python script | No numeric final metric is included in the supplied source file. |
 | Original project presentation | Approximately 78.01% IoU was reported; this is presentation-reported and has not been independently reproduced. |
-| Reproduced after refactoring | Not run; no dataset/weights or compatible local ML dependencies were available. |
+| Reproduced after refactoring | Not run; the dataset is not present in the local image/mask folders. Dependencies are installed, but no training data is available. |
 | Corrected evaluation protocol | Not run; no validation result is available. |
 | Final held-out test | Not available; no test evaluation has been run. |
 
-Do not describe the presentation figure as a reproduced result or compare it directly with a new score until the original split and metric aggregation are established.
+The archived Colab source pairs independently sorted image and mask lists by position, applies random flips through a dataset also used for validation, creates only a train/validation split, and averages batch-level IoU values. The corrected project pairs by filename, confines augmentation to training, reserves a test split, and reports per-image and global metrics. These protocol changes mean the presentation figure is not directly comparable to a corrected score. Do not describe it as reproduced or promise the same or higher IoU until the original data, partition, and aggregation are established and both runs are controlled.
 
 ## 11. Visual predictions
 
