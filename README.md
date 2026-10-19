@@ -82,7 +82,7 @@ New-Item -ItemType Directory -Force -Path .\data\bijie\raw, .\data\bijie\images,
 Get-ChildItem .\data\bijie -Recurse -Directory
 ```
 
-Download the dataset from the upstream source and extract it under `data\bijie\raw`. Inspect its real structure, then copy the corresponding image/mask files into the two folders above while preserving their filename stems. Do not invent masks for unmatched files. Or, if the archive already has clean matching folders, set `$images` and `$masks` to those actual folder paths instead. Then run:
+Download the dataset from the [upstream source page](https://gpcv.whu.edu.cn/data/Bijie_pages.html) and extract it under `data\bijie\raw`. Inspect its real structure, then copy the corresponding image and mask files directly into the `images` and `masks` folders above (not into nested subfolders), preserving matching filename stems. Do not invent masks for unmatched files. Or, if the archive already has clean matching folders, set `$images` and `$masks` to those actual folder paths instead. Then run:
 
 ```powershell
 $images = ".\data\bijie\images"
