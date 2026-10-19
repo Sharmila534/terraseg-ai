@@ -1,0 +1,8 @@
+# Install a PyTorch/torchvision build for your hardware first; see README.md.
+torch
+torchvision
+numpy
+Pillow
+matplotlib
+segmentation-models-pytorch
+pytest

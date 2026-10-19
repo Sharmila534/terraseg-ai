@@ -1,0 +1,16 @@
+{
+  "image_size": 256,
+  "batch_size": 8,
+  "learning_rate": 0.0005,
+  "epochs": 50,
+  "patience": 10,
+  "train_fraction": 0.70,
+  "validation_fraction": 0.15,
+  "test_fraction": 0.15,
+  "threshold": 0.5,
+  "loss": "bce_dice",
+  "positive_weight": 15.0,
+  "augmentation": true,
+  "imagenet_normalization": true,
+  "num_workers": 0
+}
