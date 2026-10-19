@@ -163,11 +163,11 @@ No project license has been selected. `LICENSE` is an explicit placeholder and g
 
 ## 16. Publish to GitHub
 
-The GitHub repository already exists and is empty. To publish to a different account, replace `<YOUR_GITHUB_USERNAME>` below with that account's username.
+The supplied GitHub repository has now been populated with this project. To publish a separate copy under another account, replace `<YOUR_GITHUB_USERNAME>` below with that account's username.
 
-1. If using the existing destination, skip repository creation. Otherwise, sign in to GitHub and choose **New repository**.
-2. Name it `terraseg-ai`. For a new remote, leave “Add a README,” `.gitignore`, and license unchecked because those files already exist locally. Choose visibility intentionally.
-3. From PowerShell, switch to the project directory and review the existing local commit:
+1. The supplied destination already exists; skip repository creation when updating it. For a different account, sign in to GitHub and choose **New repository**.
+2. Name a new repository `terraseg-ai`. Leave “Add a README,” `.gitignore`, and license unchecked because those files already exist locally. Choose visibility intentionally.
+3. From PowerShell, switch to the project directory and review the local commit and working tree:
 
    ```powershell
    cd "PATH\TO\terraseg-ai"
@@ -177,24 +177,26 @@ The GitHub repository already exists and is empty. To publish to a different acc
    git diff --cached
    ```
 
-4. Confirm no dataset, checkpoint, credential, or unrelated file is staged. The local project already has an initial commit. If starting from an uncommitted copy, stage and commit the project:
+4. Confirm no dataset, checkpoint, credential, or unrelated file is staged. The supplied local project already has its commits. After making later changes, stage and commit only the reviewed files:
 
    ```powershell
    git add .gitignore LICENSE README.md pyproject.toml requirements.txt configs docs src tests
    git status --short
    git diff --cached --stat
    git diff --cached
-   git commit -m "Initial TerraSeg AI project"
+   git commit -m "Describe your change"
    ```
 
-5. Replace `<YOUR_GITHUB_USERNAME>` with the repository owner's username, then add the remote and push the `main` branch:
+5. For the supplied project, `origin` already points to its GitHub repository. For a new destination, replace `<YOUR_GITHUB_USERNAME>` and add or update the remote, then push `main`:
 
    ```powershell
+   # Run one of these: add for a new origin, or set-url for an existing origin.
    git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai.git
+   # git remote set-url origin https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai.git
    git remote -v
    git push -u origin main
    ```
 
-6. Visit `https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai` and verify the README and files. Copy the resulting repository URL for your resume.
+6. Visit `https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai` and verify the README and files. The supplied destination is already populated; copy its verified repository URL for your resume.
 
 Git Bash uses the same Git commands, but path syntax differs (for example, `/c/path/to/terraseg-ai`). Review the staged files before pushing. `LICENSE` is currently a placeholder, so the repository grants no reuse rights; choose a license before inviting others to reuse the code. The dataset may have separate terms.

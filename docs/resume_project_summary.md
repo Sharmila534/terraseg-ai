@@ -32,20 +32,22 @@ Python, PyTorch, semantic segmentation, computer vision, U-Net, transfer learnin
 
 ## GitHub publishing guide (PowerShell)
 
-1. Review files and license. The current `LICENSE` is a placeholder; choose a license before publishing.
-2. The supplied destination repository has already been created and is empty. For another account, create an **empty** repository named `terraseg-ai` (do not initialize it with a README, since one already exists locally). Choose public visibility only if you want the resume link to be publicly viewable.
+1. Review files and the license status. The current `LICENSE` is a placeholder; choose a license before inviting others to reuse the project.
+2. The supplied destination repository already contains this project. For another account, create an **empty** repository named `terraseg-ai` (do not initialize it with a README, since one already exists locally). Choose public visibility only if you want the resume link to be publicly viewable.
 3. In PowerShell, `cd` to this project directory and run `git status --short` and `git status --ignored --short`. A local Git repository has already been initialized here; do not run `git init` again unless you intentionally start over.
 4. Inspect the candidate file list with `git ls-files --others --exclude-standard`. Confirm no data, weights, credentials, or unrelated files are present.
 5. If you are following this guide in a different copy without Git metadata, run `git init -b main`. Stage the intended project files, including `pyproject.toml`: `git add README.md LICENSE .gitignore requirements.txt pyproject.toml configs src tests docs`.
-6. Review `git status`, then `git diff --cached --stat` and `git diff --cached`. Commit with `git commit -m "Initial TerraSeg AI project"`.
-7. Replace `<YOUR_GITHUB_USERNAME>` with the account owner before running these commands, then add the remote and push:
+6. Review `git status`, then `git diff --cached --stat` and `git diff --cached`. For a new uncommitted copy, create the initial commit with `git commit -m "Initial TerraSeg AI project"`.
+7. For the supplied repository, `origin` is already configured. For a different account, replace `<YOUR_GITHUB_USERNAME>` and use these commands (use `git remote set-url` if `origin` already exists):
 
    ```powershell
    git remote add origin "https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai.git"
+   # If origin already exists, run this instead:
+   # git remote set-url origin "https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai.git"
    git remote -v
    git push -u origin main
    ```
 
-8. Open `https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai`, verify the README and tracked files, and copy that repository address for your resume. For the supplied destination, the repository exists already; it becomes populated after push.
+8. Open `https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai`, verify the README and tracked files, and copy that repository address for your resume. The supplied destination is already populated and verified.
 
 Git Bash uses the same Git commands; use `/c/path/to/...` path syntax there. Review the staged files before pushing. The `LICENSE` file remains a placeholder and grants no reuse rights; select a project license before inviting reuse. Dataset terms are separate.
