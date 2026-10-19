@@ -12,5 +12,6 @@
   "positive_weight": 15.0,
   "augmentation": true,
   "imagenet_normalization": true,
-  "num_workers": 0
+  "num_workers": 0,
+  "num_threads": 4
 }

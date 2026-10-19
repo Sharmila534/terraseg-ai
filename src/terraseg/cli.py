@@ -57,15 +57,16 @@ def main(argv=None):
         if not isinstance(config, dict):
             p.error(f"Config file {args.config} must contain a JSON object.")
         try:
-            args.image_size=int(config["image_size"]); args.batch_size=int(config["batch_size"]); args.num_workers=int(config.get("num_workers",0)); args.threshold=float(config.get("threshold",.5))
-            if args.image_size < 1 or args.batch_size < 1 or args.num_workers < 0 or not 0 < args.threshold < 1:
-                raise ValueError("image_size/batch_size must be positive, num_workers nonnegative, and threshold between 0 and 1")
+            args.image_size=int(config["image_size"]); args.batch_size=int(config["batch_size"]); args.num_workers=int(config.get("num_workers",0)); args.num_threads=int(config.get("num_threads",4)); args.threshold=float(config.get("threshold",.5))
+            if args.image_size < 1 or args.batch_size < 1 or args.num_workers < 0 or args.num_threads < 1 or not 0 < args.threshold < 1:
+                raise ValueError("image_size/batch_size/num_threads must be positive, num_workers nonnegative, and threshold between 0 and 1")
             train_fraction=float(config["train_fraction"]); validation_fraction=float(config["validation_fraction"])
             test_fraction=float(config.get("test_fraction",1-train_fraction-validation_fraction))
             if abs(train_fraction + validation_fraction + test_fraction - 1.0) > 1e-6:
                 raise ValueError("train_fraction, validation_fraction, and test_fraction must sum to 1")
         except (KeyError, TypeError, ValueError) as exc:
             p.error(f"Invalid training config {args.config}: {exc}")
+        torch.set_num_threads(args.num_threads)
         args.imagenet_normalization=args.imagenet_normalization or config.get("imagenet_normalization",False)
         try:
             pairs=matched_pairs(args.images,args.masks,strict=True)
@@ -152,6 +153,10 @@ def main(argv=None):
     else:
         ck=torch.load(args.checkpoint,map_location=device,weights_only=False)
         saved_config=ck.get("config",{}) if isinstance(ck,dict) else {}
+        try:
+            torch.set_num_threads(max(1,int(saved_config.get("num_threads",4))))
+        except (TypeError, ValueError):
+            p.error("Checkpoint config contains an invalid num_threads value.")
         args.imagenet_normalization=saved_config.get("imagenet_normalization",args.imagenet_normalization)
         loader=_loader(args,splits[args.partition]); model=build_model(model_name,False).to(device)
         model.load_state_dict(ck["model"] if "model" in ck else ck)

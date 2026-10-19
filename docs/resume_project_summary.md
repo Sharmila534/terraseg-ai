@@ -22,7 +22,7 @@ Python, PyTorch, semantic segmentation, computer vision, U-Net, transfer learnin
 - Architectures: `src/terraseg/models.py`.
 - Dataset matching and preprocessing: `src/terraseg/data.py`.
 - Metrics and training loop: `src/terraseg/metrics.py`, `src/terraseg/engine.py`, `src/terraseg/cli.py`.
-- Tests: `tests/test_core.py` covers the listed synthetic cases. A prior local run passed six tests but seven could not create pytest temporary folders because Windows denied access; the full suite is not verified yet. The CPU synthetic model-shape smoke check did pass.
+- Tests: `tests/test_core.py` covers the listed synthetic cases. A targeted local run passed 12 tests. The full run had seven setup errors because Windows denied access to pytest temporary folders; the full suite is not verified yet. The CPU synthetic model-shape smoke check did pass.
 
 ## Claims not supported yet
 

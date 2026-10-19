@@ -82,20 +82,23 @@ New-Item -ItemType Directory -Force -Path .\data\bijie\raw, .\data\bijie\images,
 Get-ChildItem .\data\bijie -Recurse -Directory
 ```
 
-Download the dataset from the [upstream source page](https://gpcv.whu.edu.cn/data/Bijie_pages.html) and extract it under `data\bijie\raw`. Inspect its real structure, then copy the corresponding image and mask files directly into the `images` and `masks` folders above (not into nested subfolders), preserving matching filename stems. Do not invent masks for unmatched files. Or, if the archive already has clean matching folders, set `$images` and `$masks` to those actual folder paths instead. Then run:
+Download the dataset from the [upstream source page](https://gpcv.whu.edu.cn/data/Bijie_pages.html). In the current Windows workspace the downloaded archive is `data\bijie dataset` (it has no `.zip` suffix). Extract it with the project virtual environment's Python:
 
 ```powershell
-$images = ".\data\bijie\images"
-$masks = ".\data\bijie\masks"
-if (!(Test-Path -LiteralPath $images) -or !(Test-Path -LiteralPath $masks)) { throw "Create the image and mask folders above first." }
-Test-Path -LiteralPath $images
-Test-Path -LiteralPath $masks
+python -c "import zipfile; z=zipfile.ZipFile(r'.\data\bijie dataset'); z.extractall(r'.\data\bijie\raw')"
+```
+
+The archive extracts to `data\bijie\raw\Bijie-landslide-dataset`. It has 770 landslide images and corresponding masks; the 2,003 non-landslide images have no masks and are not part of this paired binary-segmentation run. Use the actual extracted paths (do not use the empty `data\bijie\images` and `data\bijie\masks` placeholders):
+
+```powershell
+$images = ".\data\bijie\raw\Bijie-landslide-dataset\landslide\image"
+$masks = ".\data\bijie\raw\Bijie-landslide-dataset\landslide\mask"
 Get-ChildItem -LiteralPath $images -File | Select-Object -First 5 Name
 Get-ChildItem -LiteralPath $masks -File | Select-Object -First 5 Name
 python -m terraseg audit --images $images --masks $masks
 ```
 
-Supported file extensions are PNG, JPG/JPEG, and TIFF. The audit prints counts and unmatched/duplicate names; it exits with an error status if the pairs are not clean or no pairs are found. Resolve discrepancies before training. Files under `data` are ignored by Git and will stay local.
+The verified archive yields 770 pairs with no unmatched or duplicate names. Supported file extensions are PNG, JPG/JPEG, and TIFF. Stop if your audit reports zero pairs or unmatched/duplicate files. Files under `data` are ignored by Git and stay local.
 
 ## 8. Train, smoke-test, and evaluate
 
@@ -105,10 +108,9 @@ Run from the project root after installation. The first training run writes `res
 # Synthetic model-shape smoke check; no dataset needed
 python -m terraseg smoke --device cpu
 
-# Set these once per PowerShell window. Change them only if your actual folders differ.
-$images = ".\data\bijie\images"
-$masks = ".\data\bijie\masks"
-if (!(Test-Path -LiteralPath $images) -or !(Test-Path -LiteralPath $masks)) { throw "Create the image and mask folders in the dataset configuration section first." }
+# Use the extracted archive paths above, not the empty placeholder folders.
+$images = ".\data\bijie\raw\Bijie-landslide-dataset\landslide\image"
+$masks = ".\data\bijie\raw\Bijie-landslide-dataset\landslide\mask"
 
 # Initial baseline settings
 python -m terraseg train --images $images --masks $masks --model unet --config configs/default.json --seed 42
@@ -133,7 +135,7 @@ Install test dependencies using the setup commands, then run:
 python -m pytest -q tests
 ```
 
-Tests create tiny synthetic images/masks and cover matching, integrity errors, shapes/ranges, augmentation, deterministic evaluation preprocessing, metrics and edge cases, model output dimensions, and seeded splits. No Bijie download or full training is required. The CPU smoke check passed. In this restricted Windows environment, six tests passed but seven tests could not create pytest temporary folders (Windows access denied); the full suite remains unverified. Run `python -m pytest -q tests` in your project environment. Training requires at least three clean matched pairs so every partition has a sample; with tiny datasets, split sizes are adjusted to preserve non-empty train, validation, and test partitions.
+Tests create tiny synthetic images/masks and cover matching, integrity errors, shapes/ranges, augmentation, deterministic evaluation preprocessing, metrics and edge cases, model output dimensions, and seeded splits. No Bijie download or full training is required. The CPU smoke check passed. A targeted run passed 12 tests. The full run had 12 passed and 7 test setup errors because Windows denied access to pytest temporary folders; the full suite remains unverified in this environment. Run `python -m pytest -q tests` in your project environment. Training presets cap PyTorch CPU threads at four by default; change `num_threads` in the config if your CPU benefits from a different setting. Training requires at least three clean matched pairs so every partition has a sample; with tiny datasets, split sizes are adjusted to preserve non-empty train, validation, and test partitions.
 
 Seeds, split IDs, configurations, epoch records, and metrics are saved. Exact bitwise reproducibility can vary by hardware, software versions, and GPU kernels. The saved test partition must remain out of model selection and threshold tuning.
 
@@ -143,8 +145,8 @@ Seeds, split IDs, configurations, epoch records, and metrics are saved. Exact bi
 |---|---|
 | Original supplied Python script | No numeric final metric is included in the supplied source file. |
 | Original project presentation | Approximately 78.01% IoU was reported; this is presentation-reported and has not been independently reproduced. |
-| Reproduced after refactoring | Not run; the dataset is not present in the local image/mask folders. Dependencies are installed, but no training data is available. |
-| Corrected evaluation protocol | Not run; no validation result is available. |
+| Reproduced after refactoring | Dataset extracted and 770 pairs audited. CPU-only training was started but stopped before the first epoch completed; no trained result is available yet. |
+| Corrected evaluation protocol | Not run; training has not produced a checkpoint. |
 | Final held-out test | Not available; no test evaluation has been run. |
 
 The archived Colab source pairs independently sorted image and mask lists by position, applies random flips through a dataset also used for validation, creates only a train/validation split, and averages batch-level IoU values. The corrected project pairs by filename, confines augmentation to training, reserves a test split, and reports per-image and global metrics. These protocol changes mean the presentation figure is not directly comparable to a corrected score. Do not describe it as reproduced or promise the same or higher IoU until the original data, partition, and aggregation are established and both runs are controlled.
