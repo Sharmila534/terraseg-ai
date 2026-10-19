@@ -51,7 +51,7 @@ The default probability threshold is 0.5. Macro metrics calculate the metric for
 Python 3.10–3.12 is the documented target. Create a virtual environment in Windows PowerShell and install a PyTorch/torchvision build selected for your hardware from the [official PyTorch installer](https://pytorch.org/get-started/locally/). Run the selector's generated command; CPU and CUDA commands differ.
 
 ```powershell
-cd "C:\path\to\terraseg-ai"
+cd "PATH\TO\terraseg-ai"
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
@@ -163,21 +163,21 @@ No project license has been selected. `LICENSE` is an explicit placeholder and g
 
 ## 16. Publish to GitHub
 
-The local project is not yet on GitHub. The intended repository address is `https://github.com/Sharmila534/terraseg-ai`, based on the GitHub account URL supplied by the project owner. Create the empty repository in the GitHub web interface because the available GitHub connection in this environment cannot create repositories:
+The GitHub repository already exists and is empty. To publish to a different account, replace `<YOUR_GITHUB_USERNAME>` below with that account's username.
 
-1. Sign in to GitHub as `Sharmila534` and choose **New repository**.
-2. Name it `terraseg-ai`. Choose public visibility if you want to share it on a resume. Leave “Add a README,” `.gitignore`, and license unchecked because those files already exist locally and the license is still a placeholder.
-3. From PowerShell, switch to the project directory and review what will be committed:
+1. If using the existing destination, skip repository creation. Otherwise, sign in to GitHub and choose **New repository**.
+2. Name it `terraseg-ai`. For a new remote, leave “Add a README,” `.gitignore`, and license unchecked because those files already exist locally. Choose visibility intentionally.
+3. From PowerShell, switch to the project directory and review the existing local commit:
 
    ```powershell
-   cd "C:\Users\saish\Documents\New project\terraseg-ai"
+   cd "PATH\TO\terraseg-ai"
    git status --short
    git status --ignored --short
    git ls-files --others --exclude-standard
    git diff --cached
    ```
 
-4. Confirm no dataset, checkpoint, credential, or unrelated file is staged. Stage and commit the project:
+4. Confirm no dataset, checkpoint, credential, or unrelated file is staged. The local project already has an initial commit. If starting from an uncommitted copy, stage and commit the project:
 
    ```powershell
    git add .gitignore LICENSE README.md pyproject.toml requirements.txt configs docs src tests
@@ -187,14 +187,14 @@ The local project is not yet on GitHub. The intended repository address is `http
    git commit -m "Initial TerraSeg AI project"
    ```
 
-5. Add the remote and push the `main` branch:
+5. Replace `<YOUR_GITHUB_USERNAME>` with the repository owner's username, then add the remote and push the `main` branch:
 
    ```powershell
-   git remote add origin https://github.com/Sharmila534/terraseg-ai.git
+   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai.git
    git remote -v
    git push -u origin main
    ```
 
-6. Visit `https://github.com/Sharmila534/terraseg-ai` and verify the README and files. Copy that verified URL for your resume.
+6. Visit `https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai` and verify the README and files. Copy the resulting repository URL for your resume.
 
-Git Bash uses the same Git commands, but path syntax differs (for example, `/c/Users/saish/Documents/New project/terraseg-ai`). Do not push until the staged-file review is clean and you have selected a project license.
+Git Bash uses the same Git commands, but path syntax differs (for example, `/c/path/to/terraseg-ai`). Review the staged files before pushing. `LICENSE` is currently a placeholder, so the repository grants no reuse rights; choose a license before inviting others to reuse the code. The dataset may have separate terms.

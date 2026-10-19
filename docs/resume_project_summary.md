@@ -33,19 +33,19 @@ Python, PyTorch, semantic segmentation, computer vision, U-Net, transfer learnin
 ## GitHub publishing guide (PowerShell)
 
 1. Review files and license. The current `LICENSE` is a placeholder; choose a license before publishing.
-2. Sign in to GitHub as `Sharmila534` and create an **empty** repository named `terraseg-ai` (do not initialize it with a README, since one already exists locally). Choose public visibility only if you want the resume link to be publicly viewable.
+2. The supplied destination repository has already been created and is empty. For another account, create an **empty** repository named `terraseg-ai` (do not initialize it with a README, since one already exists locally). Choose public visibility only if you want the resume link to be publicly viewable.
 3. In PowerShell, `cd` to this project directory and run `git status --short` and `git status --ignored --short`. A local Git repository has already been initialized here; do not run `git init` again unless you intentionally start over.
 4. Inspect the candidate file list with `git ls-files --others --exclude-standard`. Confirm no data, weights, credentials, or unrelated files are present.
 5. If you are following this guide in a different copy without Git metadata, run `git init -b main`. Stage the intended project files, including `pyproject.toml`: `git add README.md LICENSE .gitignore requirements.txt pyproject.toml configs src tests docs`.
 6. Review `git status`, then `git diff --cached --stat` and `git diff --cached`. Commit with `git commit -m "Initial TerraSeg AI project"`.
-7. Add the remote for the account provided by the project owner and push:
+7. Replace `<YOUR_GITHUB_USERNAME>` with the account owner before running these commands, then add the remote and push:
 
    ```powershell
-   git remote add origin "https://github.com/Sharmila534/terraseg-ai.git"
+   git remote add origin "https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai.git"
    git remote -v
    git push -u origin main
    ```
 
-8. Open `https://github.com/Sharmila534/terraseg-ai`, verify the README and tracked files, and copy that repository address for your resume. The URL is not yet a live repository; it must first be created and pushed.
+8. Open `https://github.com/<YOUR_GITHUB_USERNAME>/terraseg-ai`, verify the README and tracked files, and copy that repository address for your resume. For the supplied destination, the repository exists already; it becomes populated after push.
 
-Git Bash uses the same Git commands; use `/c/Users/...` path syntax there. The connected GitHub integration in this workspace can work with existing repositories but has no repository-creation operation, and `gh` is not installed. Therefore the owner must create the empty remote repository in GitHub's web interface before the documented push can succeed. Review the staged files and choose a project license before publishing.
+Git Bash uses the same Git commands; use `/c/path/to/...` path syntax there. Review the staged files before pushing. The `LICENSE` file remains a placeholder and grants no reuse rights; select a project license before inviting reuse. Dataset terms are separate.
