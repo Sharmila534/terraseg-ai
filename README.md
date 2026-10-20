@@ -71,7 +71,7 @@ Select a GPU runtime if one is available, upload or clone this project into the 
 !python -m pip install -e ".[test]"
 ```
 
-If data is in Google Drive, mount it and pass the actual extracted image and mask paths to the commands below. GPU is recommended for training, particularly ResNet-34; audit, tests, and the synthetic smoke command can run on CPU. Training/evaluation can run on CPU too, but may be slow.
+If data is in Google Drive, mount it and pass the actual extracted image and mask paths to the commands below. GPU is recommended for training, particularly ResNet-34; audit, tests, and the synthetic smoke command can run on CPU. Training/evaluation can run on CPU too, but may be slow. On some Windows CPU-only installations, importing PyTorch takes tens of seconds; the CLI prints a startup message while loading it. A 256×256 U-Net run over the full dataset can take many minutes per epoch on a CPU, so use a compatible CUDA build or Colab GPU for practical training.
 
 ## 7. Dataset configuration and audit
 

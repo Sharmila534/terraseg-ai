@@ -1,16 +1,10 @@
-import argparse, json, random, time
+import argparse, json, random, sys, time
 from pathlib import Path
-import numpy as np
-import torch
-from torch.utils.data import DataLoader, Subset
-from .data import audit_pairs, matched_pairs, make_splits, save_splits, load_splits, BijieDataset
-from .models import build_model
-from .losses import build_loss
-from .engine import run_epoch
-from .visualize import save_predictions
 
 
 def _loader(args, ids, augment=False, shuffle=False):
+    from torch.utils.data import DataLoader
+    from .data import BijieDataset
     ds=BijieDataset(args.images,args.masks,ids,image_size=args.image_size,augment=augment,imagenet_normalization=args.imagenet_normalization)
     return DataLoader(ds,batch_size=args.batch_size,shuffle=shuffle,num_workers=args.num_workers)
 
@@ -35,6 +29,14 @@ def main(argv=None):
     args=p.parse_args(argv)
     if args.command in {"audit","train","evaluate"}:
         _validate_data_paths(args,p)
+    print("Loading PyTorch and project data modules; first startup may take tens of seconds on CPU...",file=sys.stderr,flush=True)
+    import numpy as np
+    import torch
+    from .data import audit_pairs, matched_pairs, make_splits, save_splits, load_splits, BijieDataset
+    from .models import build_model
+    from .losses import build_loss
+    from .engine import run_epoch
+    from .visualize import save_predictions
     if args.command=="audit":
         report=audit_pairs(args.images,args.masks); print(json.dumps(report,indent=2))
         if not report["paired_count"]:
