@@ -160,23 +160,33 @@ Seeds, split IDs, configurations, epoch records, and metrics are saved. Exact bi
 
 ## 10. Results
 
-| Result source | Status |
-|---|---|
-| Original supplied Python script | No numeric final metric is included in the supplied source file. |
-| Original project presentation | Approximately 78.01% IoU was reported; this is presentation-reported and has not been independently reproduced. |
-| Reproduced after refactoring | Dataset extracted and 770 pairs audited. CPU-only training was started but stopped before the first epoch completed; no trained result is available yet. |
-| Corrected evaluation protocol | Not run; training has not produced a checkpoint. |
-| Final held-out test | Not available; no test evaluation has been run. |
+The following local run artifacts were inspected on 2026-10-21. All four validation runs used seed 42 and the same saved partition (539 train / 115 validation / 116 test). Values are percentages. “Global” aggregates pixels across the partition; “per-image” computes each image's score first, then averages images.
+
+| Result source | Model / protocol | Global IoU | Mean per-image IoU | Dice (global) | Precision (global) | Recall (global) | Best epoch |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Reproduced after refactoring: validation | Custom CNN, default config | 23.48 | 26.55 | 38.03 | 23.87 | 93.49 | 8 |
+| Reproduced after refactoring: validation | Baseline U-Net, default config | 26.92 | 29.60 | 42.42 | 27.48 | 92.94 | 9 |
+| Reproduced after refactoring: validation | Advanced U-Net | 33.34 | 36.45 | 50.01 | 37.46 | 75.23 | 7 |
+| Reproduced after refactoring: validation | ResNet-34 U-Net | 79.32 | 78.21 | 88.47 | 91.25 | 85.85 | 31 |
+
+| Result source | Model / protocol | Global IoU | Mean per-image IoU | Notes |
+|---|---|---:|---:|---|
+| Original supplied Python | Source workflow | Not recorded as a final numeric result in the supplied script | — | The script computes batch-level IoU during execution; that is a different aggregation protocol. |
+| Original project presentation | Reported result | ~78.01 | — | Presentation-reported only; exact checkpoint, split, threshold, and aggregation were not verified. |
+| Corrected evaluation protocol: held-out test | Advanced U-Net, seed 42, threshold 0.5 | 29.97 | 34.61 | This test evaluation has already been run once. Treat it as an observed result, not an untouched final benchmark. The corresponding prediction plot shows substantial overprediction on several examples. |
+
+Validation metrics are saved in each run folder, for example `results\\resnet34_unet\\resnet34_seed42\\validation_metrics.json`. Test metrics are in `results\\evaluation_unet_test\\metrics.json`. The compact tracked summary is `results/summary/current_results.json`; checkpoints, full split IDs, predictions, and detailed run files remain local and ignored by Git. ResNet-34 U-Net is the current validation leader; its test performance has not been measured. The test score above is from Advanced U-Net and must not be used to rank models or tune thresholds.
 
 The archived Colab source pairs independently sorted image and mask lists by position, applies random flips through a dataset also used for validation, creates only a train/validation split, and averages batch-level IoU values. The corrected project pairs by filename, confines augmentation to training, reserves a test split, and reports per-image and global metrics. These protocol changes mean the presentation figure is not directly comparable to a corrected score. Do not describe it as reproduced or promise the same or higher IoU until the original data, partition, and aggregation are established and both runs are controlled.
 
 ## 11. Visual predictions
 
-No verified prediction image is available yet. Training/evaluation commands save plots in their run output directory once run on the dataset.
+Verified local prediction plots were generated. Validation examples are under each training run's `validation_predictions.png`; the Advanced U-Net test plot is `results\\evaluation_unet_test\\predictions.png`. These plots and underlying imagery are intentionally excluded from Git with the local results/data. The test plot shows overprediction in several examples, consistent with its modest test IoU; it is qualitative evidence, not a separate metric.
 
 ## 12. Limitations
 
-- No reproduced score or held-out test score is available.
+- Only one seed and one random image-level split have been run per configuration; uncertainty and geographic generalization are not characterized.
+- The Advanced U-Net test partition has already been evaluated and inspected once. It should not be described as an untouched final test set going forward. ResNet-34 U-Net has validation results only.
 - Dataset license/reuse rights need confirmation from the provider.
 - A random image split may not prevent geographic or temporal leakage.
 - The exact source data layout and mask coverage need to be audited before training.
@@ -185,7 +195,7 @@ No verified prediction image is available yet. Training/evaluation commands save
 
 ## 13. Planned work
 
-Verify the dataset terms and sample layout, run the tests and audit, establish fixed splits, compare the three architectures under documented configurations, and report final held-out test metrics. Investigate spatially grouped splits. DEM/slope/SAR fusion is future work only; it is not implemented.
+Verify dataset terms, rerun the complete test suite in a clean Windows environment, decide whether to retain the ResNet-34 candidate using validation evidence only, and establish a new geographically grouped evaluation protocol before making a final generalization claim. See [`docs/roadmap_and_checklist.md`](docs/roadmap_and_checklist.md) for the staged next steps. DEM/slope/SAR fusion is future work only; it is not implemented.
 
 ## 14. Citation and attribution
 

@@ -10,6 +10,7 @@ The project retains custom CNN, U-Net, and ResNet-34 U-Net approaches and adds a
 - Refactored a Colab-based landslide segmentation prototype into a modular PyTorch project with custom CNN, U-Net, and ResNet-34 U-Net model options.
 - Implemented filename-stem image/mask matching, deterministic preprocessing, configurable seeded data splits, and training/validation/test command-line workflows.
 - Added binary segmentation metrics for per-image and global IoU, Dice, precision, and recall, plus synthetic tests for data integrity and model output shapes.
+- Ran four seed-42 model/configuration experiments on one shared validation partition; the ResNet-34 U-Net validation run reached 79.32% global IoU and 78.21% mean per-image IoU. This is a single-split validation result, not an independently reproduced original result or a final test score.
 
 Use only the bullets that match your personal contribution. Replace “refactored” or describe collaboration accurately if teammates completed part of the work.
 
@@ -23,12 +24,18 @@ Python, PyTorch, semantic segmentation, computer vision, U-Net, transfer learnin
 - Dataset matching and preprocessing: `src/terraseg/data.py`.
 - Metrics and training loop: `src/terraseg/metrics.py`, `src/terraseg/engine.py`, `src/terraseg/cli.py`.
 - Tests: `tests/test_core.py` covers the listed synthetic cases. A targeted local run passed 12 tests. The full run had seven setup errors because Windows denied access to pytest temporary folders; the full suite is not verified yet. The CPU synthetic model-shape smoke check did pass.
+- Experiment results: `results/summary/current_results.json` is the tracked summary, generated from local run metrics. Detailed JSON metrics, epoch logs, configs, checkpoints, split IDs, and plots are under the Git-ignored `results/` directory.
+- Evaluation caveat: Advanced U-Net was evaluated once on the saved test partition (29.97% global IoU; 34.61% mean per-image IoU), and its predictions were inspected. Do not describe that partition as untouched or use it for future model selection. ResNet-34 U-Net has validation results only.
 
 ## Claims not supported yet
 
-- 78.01% reproduced IoU, improved performance, or a held-out test score.
+- Reproduced 78.01% IoU, improved performance over the original project, or a final/untouched held-out test score.
 - Deployment, production readiness, state-of-the-art results, publication, or patent.
 - DEM/slope/SAR fusion, a verified dataset license, dataset size, or independent ownership of teammates' work.
+
+## Next technical milestones
+
+See [`roadmap_and_checklist.md`](roadmap_and_checklist.md) for the complete status and ordered plan. The immediate priorities are to run the full test suite in a clean Windows environment, verify the unusually strong ResNet-34 validation result against split integrity and visual predictions, and design a geographically grouped evaluation with a new untouched test set. The existing Advanced U-Net test partition has already been evaluated and inspected.
 
 ## GitHub publishing guide (PowerShell)
 

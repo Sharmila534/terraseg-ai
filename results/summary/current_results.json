@@ -1,0 +1,96 @@
+{
+  "snapshot_date": "2026-10-21",
+  "dataset": {
+    "name": "Bijie landslide paired segmentation subset",
+    "paired_samples": 770,
+    "audit": "770 matched pairs; zero unmatched and duplicate names, as reported in the local audit",
+    "split_seed": 42,
+    "split_counts": {
+      "train": 539,
+      "validation": 115,
+      "test": 116
+    }
+  },
+  "validation_runs": [
+    {
+      "model": "custom_cnn",
+      "config": "default",
+      "seed": 42,
+      "partition": "validation",
+      "global_iou_percent": 23.482985695290445,
+      "per_image_mean_iou_percent": 26.54729282663466,
+      "global_dice_percent": 38.03436653732624,
+      "global_precision_percent": 23.873594273798882,
+      "global_recall_percent": 93.48642796221643,
+      "best_epoch": 8,
+      "metrics_file": "results/custom_cnn/default_seed42/validation_metrics.json"
+    },
+    {
+      "model": "unet",
+      "config": "default",
+      "seed": 42,
+      "partition": "validation",
+      "global_iou_percent": 26.91886275339558,
+      "per_image_mean_iou_percent": 29.602472266827427,
+      "global_dice_percent": 42.419010338410844,
+      "global_precision_percent": 27.48036641029394,
+      "global_recall_percent": 92.94496413488128,
+      "best_epoch": 9,
+      "metrics_file": "results/unet/default_seed42/validation_metrics.json"
+    },
+    {
+      "model": "unet",
+      "config": "advanced_unet",
+      "seed": 42,
+      "partition": "validation",
+      "global_iou_percent": 33.34311333399209,
+      "per_image_mean_iou_percent": 36.45398449708695,
+      "global_dice_percent": 50.01100169376681,
+      "global_precision_percent": 37.455478791197594,
+      "global_recall_percent": 75.22848721683478,
+      "best_epoch": 7,
+      "metrics_file": "results/unet/advanced_unet_seed42/validation_metrics.json"
+    },
+    {
+      "model": "resnet34_unet",
+      "config": "resnet34",
+      "seed": 42,
+      "partition": "validation",
+      "global_iou_percent": 79.31708347637785,
+      "per_image_mean_iou_percent": 78.21204808197454,
+      "global_dice_percent": 88.46573002267974,
+      "global_precision_percent": 91.24919186665434,
+      "global_recall_percent": 85.84705476147466,
+      "best_epoch": 31,
+      "metrics_file": "results/resnet34_unet/resnet34_seed42/validation_metrics.json"
+    }
+  ],
+  "test_runs": [
+    {
+      "model": "unet",
+      "config": "advanced_unet",
+      "seed": 42,
+      "partition": "test",
+      "threshold": 0.5,
+      "global_iou_percent": 29.96598916649106,
+      "per_image_mean_iou_percent": 34.60516702240823,
+      "global_dice_percent": 46.113586113830995,
+      "global_precision_percent": 32.69530263490193,
+      "global_recall_percent": 78.21217800186525,
+      "metrics_file": "results/evaluation_unet_test/metrics.json",
+      "test_partition_evaluated_once_and_inspected": true,
+      "caveat": "This test partition has been consulted and must not be described as an untouched final benchmark."
+    }
+  ],
+  "reported_original_result": {
+    "iou_percent": 78.01,
+    "source": "Original project presentation, per project records",
+    "independently_reproduced": false,
+    "protocol_verified": false
+  },
+  "reproducibility_notes": [
+    "All listed validation runs use one saved seed-42 random image split.",
+    "The ResNet-34 U-Net test result is not available.",
+    "Do not compare the presentation result directly with corrected-protocol metrics without matching the split, checkpoint, threshold, and aggregation."
+  ]
+}
