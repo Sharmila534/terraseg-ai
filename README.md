@@ -118,29 +118,31 @@ python -m terraseg audit --images $images --masks $masks
 python -m terraseg smoke --device cpu
 ```
 
-The audit should report 770 matched pairs and zero unmatched or duplicate files. Then train the baseline U-Net. Keep the terminal open and wait for every epoch to finish. The first PyTorch import may take tens of seconds; CPU training can take many minutes per epoch. This environment has CPU-only PyTorch.
+The audit should report 770 matched pairs and zero unmatched or duplicate files. The original code reports validation IoU for four runs. To see the corresponding results here, run these commands **one at a time** in the VS Code PowerShell terminal, keeping the terminal open until each completes. The first PyTorch import can take tens of seconds; full-data CPU training can take many minutes per epoch. This environment has CPU-only PyTorch.
 
 ```powershell
-python -u -m terraseg train --images $images --masks $masks --model unet --config configs/default.json --seed 42 --device cpu
-```
-
-Training saves the best checkpoint after a completed epoch at `results\unet\default_seed42\best.pt`. The existing seed-42 split in `results\splits.json` contains 539 training, 115 validation, and 116 test samples. Run evaluation only after the training command completes and the checkpoint exists:
-
-```powershell
-python -m terraseg evaluate --images $images --masks $masks --model unet --checkpoint results\unet\default_seed42\best.pt --splits results\splits.json --partition test
-```
-
-Test metrics are saved under `results\evaluation_unet_test\metrics.json`. Choose models and checkpoints using validation results only; do not tune thresholds on test results.
-
-To compare the other architectures, train them one at a time using the same saved split. Each evaluation must use the checkpoint produced by its corresponding completed training run:
-
-```powershell
-python -u -m terraseg train --images $images --masks $masks --model unet --config configs/advanced_unet.json --seed 42 --device cpu
-python -u -m terraseg train --images $images --masks $masks --model resnet34_unet --config configs/resnet34.json --seed 42 --device cpu
+# Original Model 1: CNN
 python -u -m terraseg train --images $images --masks $masks --model custom_cnn --config configs/default.json --seed 42 --device cpu
+
+# Original Model 2: baseline U-Net
+python -u -m terraseg train --images $images --masks $masks --model unet --config configs/default.json --seed 42 --device cpu
+
+# Advanced U-Net
+python -u -m terraseg train --images $images --masks $masks --model unet --config configs/advanced_unet.json --seed 42 --device cpu
+
+# ResNet-34 U-Net; first use may need to download pretrained ImageNet weights
+python -u -m terraseg train --images $images --masks $masks --model resnet34_unet --config configs/resnet34.json --seed 42 --device cpu
 ```
 
-Runs are saved under `results/<model>/<config>_seed<seed>/`. A completed run has `config.json`, `epochs.json`, `best.pt`, `validation_metrics.json`, and a validation prediction plot. Evaluation creates `metrics.json` and a prediction plot. Use a new `--output` path when repeating a completed run so its checkpoint is preserved. Run tests with `python -m pytest -q tests`.
+Each epoch prints a JSON line with train and validation metrics. After a run finishes, the terminal prints a `Final Validation IoU (global)` percentage and a per-image mean IoU percentage, similar to the final IoU lines in the original code. The machine-readable validation metrics are saved at `results\<model>\<config>_seed42\validation_metrics.json`; checkpoints are `best.pt` in the same run folder. All four runs use the same `results\splits.json` partition (539 train, 115 validation, 116 test).
+
+The original code reports one batch-averaged validation IoU. This project reports global pixel IoU and mean per-image IoU separately, and uses deterministic validation data, so the numbers will not be exactly identical. Compare models using validation results only. After selecting one model, evaluate it once on the held-out test partition. For example, to evaluate the baseline U-Net after its training has completed and `best.pt` exists:
+
+```powershell
+python -u -m terraseg evaluate --images $images --masks $masks --model unet --checkpoint results\unet\default_seed42\best.pt --splits results\splits.json --partition test
+```
+
+The test IoU is printed as a percentage; full metrics are printed as JSON and saved at `results\evaluation_unet_test\metrics.json`. Do not tune thresholds or choose models based on test results. Use a new `--output` path when repeating a completed run so its checkpoint is preserved. Run tests with `python -m pytest -q tests`.
 
 For Git Bash, activate using `source .venv/Scripts/activate`; the image and mask paths become `./data/bijie/raw/Bijie-landslide-dataset/landslide/image` and `./data/bijie/raw/Bijie-landslide-dataset/landslide/mask`.
 

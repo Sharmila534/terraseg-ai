@@ -13,6 +13,15 @@ def _common(p):
     p.add_argument("--images",required=True); p.add_argument("--masks",required=True)
 
 
+def _model_label(model_name, config=None):
+    config = config or {}
+    if model_name == "custom_cnn": return "Model 1 (CNN)"
+    if model_name == "unet" and config.get("loss") == "dice" and config.get("augmentation"): return "Advanced U-Net"
+    if model_name == "unet": return "Model 2 (U-Net baseline)"
+    if model_name == "resnet34_unet": return "ResNet-34 U-Net"
+    return model_name
+
+
 def _validate_data_paths(args, parser):
     missing=[(name,value) for name,value in (("image",args.images),("mask",args.masks)) if not Path(value).is_dir()]
     if missing:
@@ -152,6 +161,9 @@ def main(argv=None):
         metrics=run_epoch(model,val_loader,criterion,device,None,args.threshold); metrics.update({"best_epoch":ck["epoch"],"runtime_seconds":time.perf_counter()-start,"partition":"validation"})
         (output/"validation_metrics.json").write_text(json.dumps(metrics,indent=2),encoding="utf-8")
         save_predictions(model,val_loader,device,output/"validation_predictions.png",normalized=args.imagenet_normalization)
+        print(f"✅ {_model_label(model_name,config)} Final Validation IoU (global): {metrics['global_iou']*100:.2f}%")
+        print(f"   Per-image mean IoU: {metrics['per_image_iou']*100:.2f}% | best epoch: {ck['epoch']}")
+        print(f"   Metrics: {output/'validation_metrics.json'}")
     else:
         ck=torch.load(args.checkpoint,map_location=device,weights_only=False)
         saved_config=ck.get("config",{}) if isinstance(ck,dict) else {}
@@ -167,6 +179,8 @@ def main(argv=None):
         metrics.update({"partition":args.partition,"threshold":args.threshold,"checkpoint":str(args.checkpoint)})
         output.mkdir(parents=True,exist_ok=True); (output/"metrics.json").write_text(json.dumps(metrics,indent=2),encoding="utf-8")
         save_predictions(model,loader,device,output/"predictions.png",normalized=args.imagenet_normalization)
+        print(f"✅ {_model_label(model_name,saved_config)} Held-out {args.partition.title()} IoU (global): {metrics['global_iou']*100:.2f}%")
+        print(f"   Per-image mean IoU: {metrics['per_image_iou']*100:.2f}%")
         print(json.dumps(metrics,indent=2))
 
 

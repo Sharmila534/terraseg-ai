@@ -6,7 +6,7 @@ from PIL import Image
 from terraseg.data import audit_pairs, matched_pairs, make_splits, BijieDataset
 from terraseg.metrics import binary_metrics
 from terraseg.models import build_model
-from terraseg.cli import _validate_data_paths
+from terraseg.cli import _model_label, _validate_data_paths
 import argparse
 from types import SimpleNamespace
 
@@ -42,6 +42,16 @@ def test_cli_explains_invalid_dataset_paths(tmp_path, capsys):
     with pytest.raises(SystemExit): _validate_data_paths(args,parser)
     message=capsys.readouterr().err
     assert "Replace the example paths" in message and "missing-images" in message
+
+
+@pytest.mark.parametrize(("name","config","expected"), [
+    ("custom_cnn", {}, "Model 1 (CNN)"),
+    ("unet", {"loss":"dice","augmentation":True}, "Advanced U-Net"),
+    ("unet", {"loss":"bce"}, "Model 2 (U-Net baseline)"),
+    ("resnet34_unet", {}, "ResNet-34 U-Net"),
+])
+def test_model_labels_match_original_run_names(name,config,expected):
+    assert _model_label(name,config)==expected
 
 
 def test_duplicate_stems_rejected(tmp_path):
