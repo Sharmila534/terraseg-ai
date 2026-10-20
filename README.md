@@ -102,30 +102,47 @@ The verified archive yields 770 pairs with no unmatched or duplicate names. Supp
 
 ## 8. Train, smoke-test, and evaluate
 
-Run from the project root after installation. The first training run writes `results/splits.json`; all comparisons should reuse this file. Choose the config that matches the experiment:
+Run these commands in Windows PowerShell from the current project folder. The dataset is already extracted locally; do not use the empty `data\bijie\images` and `data\bijie\masks` placeholders. If the project virtual environment is set up, activate it and set the real data paths:
 
 ```powershell
-# Synthetic model-shape smoke check; no dataset needed
-python -m terraseg smoke --device cpu
-
-# Use the extracted archive paths above, not the empty placeholder folders.
+cd "C:\Users\saish\Documents\New project\terraseg-ai"
+.\.venv\Scripts\Activate.ps1
 $images = ".\data\bijie\raw\Bijie-landslide-dataset\landslide\image"
 $masks = ".\data\bijie\raw\Bijie-landslide-dataset\landslide\mask"
-
-# Initial baseline settings
-python -m terraseg train --images $images --masks $masks --model unet --config configs/default.json --seed 42
-
-# Advanced U-Net and pretrained ResNet-34 U-Net presets
-python -m terraseg train --images $images --masks $masks --model unet --config configs/advanced_unet.json --seed 42
-python -m terraseg train --images $images --masks $masks --model resnet34_unet --config configs/resnet34.json --seed 42
-
-# Evaluate the selected checkpoint on the held-out test partition
-python -m terraseg evaluate --images $images --masks $masks --model unet --checkpoint results/unet/advanced_unet_seed42/best.pt --splits results/splits.json --partition test
 ```
 
-Use `--model custom_cnn` to train the custom CNN. A run is written to `results/<model>/<config>_seed<seed>/`; an existing checkpoint is not overwritten. Pass a distinct `--output` when repeating the same config/seed. Training writes `config.json`, `epochs.json`, `best.pt`, `validation_metrics.json`, and a validation plot. Evaluation writes `metrics.json` and a plot. Run logs include per-epoch loss/metrics and elapsed times. Do not tune thresholds or choose models from test results.
+Audit the dataset and run the synthetic model-shape smoke check:
 
-If using Git Bash, the equivalent project-local paths are `./data/bijie/images` and `./data/bijie/masks`.
+```powershell
+python -m terraseg audit --images $images --masks $masks
+python -m terraseg smoke --device cpu
+```
+
+The audit should report 770 matched pairs and zero unmatched or duplicate files. Then train the baseline U-Net. Keep the terminal open and wait for every epoch to finish. The first PyTorch import may take tens of seconds; CPU training can take many minutes per epoch. This environment has CPU-only PyTorch.
+
+```powershell
+python -u -m terraseg train --images $images --masks $masks --model unet --config configs/default.json --seed 42 --device cpu
+```
+
+Training saves the best checkpoint after a completed epoch at `results\unet\default_seed42\best.pt`. The existing seed-42 split in `results\splits.json` contains 539 training, 115 validation, and 116 test samples. Run evaluation only after the training command completes and the checkpoint exists:
+
+```powershell
+python -m terraseg evaluate --images $images --masks $masks --model unet --checkpoint results\unet\default_seed42\best.pt --splits results\splits.json --partition test
+```
+
+Test metrics are saved under `results\evaluation_unet_test\metrics.json`. Choose models and checkpoints using validation results only; do not tune thresholds on test results.
+
+To compare the other architectures, train them one at a time using the same saved split. Each evaluation must use the checkpoint produced by its corresponding completed training run:
+
+```powershell
+python -u -m terraseg train --images $images --masks $masks --model unet --config configs/advanced_unet.json --seed 42 --device cpu
+python -u -m terraseg train --images $images --masks $masks --model resnet34_unet --config configs/resnet34.json --seed 42 --device cpu
+python -u -m terraseg train --images $images --masks $masks --model custom_cnn --config configs/default.json --seed 42 --device cpu
+```
+
+Runs are saved under `results/<model>/<config>_seed<seed>/`. A completed run has `config.json`, `epochs.json`, `best.pt`, `validation_metrics.json`, and a validation prediction plot. Evaluation creates `metrics.json` and a prediction plot. Use a new `--output` path when repeating a completed run so its checkpoint is preserved. Run tests with `python -m pytest -q tests`.
+
+For Git Bash, activate using `source .venv/Scripts/activate`; the image and mask paths become `./data/bijie/raw/Bijie-landslide-dataset/landslide/image` and `./data/bijie/raw/Bijie-landslide-dataset/landslide/mask`.
 
 ## 9. Tests and reproducibility
 
